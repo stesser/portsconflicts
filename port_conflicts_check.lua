@@ -341,8 +341,8 @@ end
 ---------------------------------------------------------------------
 local version_pattern = {
    "^lib/python%d%.%d/",
-   "^share/py3%d%d%?-",
-   "^share/%a+/py3%d%d%?-",
+   "^share/py3%d%d%?%-",
+   "^share/%a+/py3%d%d%?%-",
    "^lib/lua/%d%.%d/",
    "^share/lua/%d%.%d/",
    "^lib/perl5/[%d%.]+/",
@@ -363,6 +363,7 @@ local function generalize_patterns(pkgs, files)
    local function unversioned_files()
       for i = 1, #files do
          if not match_any(files[i], version_pattern) then
+            print ("# UNV", files[i])
             return true
          end
       end
@@ -374,6 +375,10 @@ local function generalize_patterns(pkgs, files)
       for i = 1, #pkgs do
          local orig_pkg = pkgs[i]
          for _, to in ipairs(to_list) do
+            local after = string.gsub(orig_pkg, from, to)
+            if after ~= orig_pkg then
+               print ("# %", from, orig_pkg, "->", after)
+            end
             result[string.gsub(orig_pkg, from, to)] = true
          end
       end
@@ -403,6 +408,8 @@ local function generalize_patterns(pkgs, files)
       pkg_pfx_lua = "${LUA_PKGNAMEPREFIX}"
       pkg_pfx_ruby = "${RUBY_PKGNAMEPREFIX}"
    end
+   pkg_wildcards("%-dj[0-9][0-9]%-(.*django)", "-dj[0-9][0-9]-%1")
+   pkg_wildcards("%-django[0-9][0-9]$", "-django[0-9][0-9]")
    pkg_wildcards("^php%d%d%-", pkg_pfx_php)
    pkg_wildcards("-php%d%d$", pkg_sfx_php)
    pkg_wildcards("^phpunit%d%-", "phpunit[0-9]-")
@@ -411,7 +418,7 @@ local function generalize_patterns(pkgs, files)
    pkg_wildcards("^py3%d%d%-", pkg_pfx_python2, pkg_pfx_python3)
    pkg_wildcards("-py3%d%d%$", pkg_sfx_python2, pkg_sfx_python3)
    pkg_wildcards("^lua%d%d%-", pkg_pfx_lua)
-   pkg_wildcards("-emacs_[%a_]*", "-emacs_*")
+   pkg_wildcards("%-emacs_[%a_]*", "-emacs_*")
    pkg_wildcards("^ghostscript%d%-", "ghostscript[0-9]-")
    pkg_wildcards("^bacula%d%-", "bacula[0-9]-")
    pkg_wildcards("^bacula%d%d%-", "bacula[0-9][0-9]-")
@@ -419,6 +426,26 @@ local function generalize_patterns(pkgs, files)
    pkg_wildcards("^bareos%d%d%-", "bareos[0-9][0-9]-")
    pkg_wildcards("^moosefs%d%-", "moosefs[0-9]-")
    pkg_wildcards("^ruby%d+-", pkg_pfx_ruby)
+   pkg_wildcards("^ldb%d%d$", "ldb[0-9][0-9]")
+   pkg_wildcards("^samba4([%d%*]+)$", "samba4[0-9][0-9]")
+   pkg_wildcards("^(rubygem%-.*%-rails)([0-9]+)", "%1[0-9]", "%1[0-9][0-9]")
+   pkg_wildcards("^(moodle)[%d]+%-", "%1[0-9][0-9]-", "%1[0-9][0-9][0-9]-")
+   pkg_wildcards("^(mediawiki)[%d]+%-", "%1[0-9][0-9][0-9]-")
+   pkg_wildcards("^cfengine-masterfiles.*", "cfengine-masterfiles*")
+   pkg_wildcards("%-pysaml%d%d$", "-pysaml[0-9][0-9]")
+   pkg_wildcards("^openssl.*", "openssl*")
+   pkg_wildcards("^libressl.*", "libressl*")
+   pkg_wildcards("^openldap%d%d$", "openldap[0-9][0-9]")
+   pkg_wildcards("^haproxy.*", "haproxy*")
+   pkg_wildcards("^postfix.*", "postfix*")
+   pkg_wildcards("^exim.*", "exim*")
+   pkg_wildcards("^e2fsprogs.*", "e2fsprogs*")
+   pkg_wildcards("^virtualbox-ose-additions.*", "virtualbox-ose-additions*")
+   pkg_wildcards("prompt-toolkit%d*$", "prompt-toolkit*")
+   pkg_wildcards("sqlalchemy%d+", "sqlalchemy[0-9][0-9]")
+   pkg_wildcards("postgresql%d+$", "postgresql[0-9][0-9]")
+   pkg_wildcards("^mariadb%d+", "mariadb*")
+   pkg_wildcards("^mysql%d+", "mysql*")
    return table_sort_uniq(pkgs)
 end
 
@@ -468,8 +495,8 @@ for _, port in ipairs(PORT_LIST) do
       print("# >      " .. conflicts_string_new)
       print("portedit merge -ie 'CONFLICTS_INSTALL=" .. conflicts_string_new ..
             " # " .. file_list .. "' /usr/ports/" .. port)
-      print()
    end
+   print()
 end
 
 -------------------------------------------------------------------
